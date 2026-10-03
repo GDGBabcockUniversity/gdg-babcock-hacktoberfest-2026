@@ -94,3 +94,22 @@ class AdminCreate(BaseModel):
 
 class ActiveUpdate(BaseModel):
     is_active: bool
+
+class SubmissionListItem(BaseModel):
+    submission_id: int
+    learner_id: int
+    learner_email: EmailStr
+    exam_id: int
+    exam_title: str
+    status: str
+    submitted_at: str
+    total_answer: int
+    graded_answers: int
+    needs_review: int
+
+class SubmissionListResponse(BaseModel):
+    items: list[SubmissionListItem]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int

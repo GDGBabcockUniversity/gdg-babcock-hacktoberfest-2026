@@ -11,7 +11,6 @@ from app.models import Role, User
 bearer_scheme = HTTPBearer()
 SessionDep = Annotated[Session, Depends(get_session)]
 
-
 def get_current_user(credentials: Annotated[HTTPAuthorizationCredentials, Depends(bearer_scheme)],
                      session: SessionDep) -> User:
     try:
