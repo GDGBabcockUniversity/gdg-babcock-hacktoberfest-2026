@@ -13,7 +13,9 @@ export default tseslint.config(
     files: ["**/*.{js,mjs,cjs,ts,tsx}"],
     rules: {
       // Add any specific rules you want to turn on/off here
-      "no-unused-vars": "warn"
+      // The base rule misreads parameter names in TypeScript function types;
+      // @typescript-eslint/no-unused-vars (from the recommended config) covers this.
+      "no-unused-vars": "off"
     }
   },
   

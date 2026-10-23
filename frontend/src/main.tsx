@@ -1,65 +1,101 @@
 /// <reference types="vite/client" />
-import { useState, useEffect } from "react";
+import { Suspense, startTransition, use, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./style.css";
-import { LoginPage } from "./pages/Login";
-import { RegisterPage } from "./pages/Register";
-import { ExamsPage } from "./pages/Exams";
-import { ResultsPage } from "./pages/Results";
-import { AdminExamBuilderPage } from "./pages/AdminExamBuilder";
-import { clearStoredToken, getCurrentUser, type UserResponse } from "./api";
+import { clearStoredToken } from "./api";
+import { Arrow } from "./components/Arrow";
+import { canAccess, safeNextPath } from "./features/auth/access";
+import { RouteGuard } from "./features/auth/RouteGuard";
+import { ROUTES, findRoute } from "./features/auth/routes";
+import { loadSession, type Session } from "./features/auth/session";
 
-const EXAM_BUILDER_PATH = "/admin/exams/new";
+const LOADING_SESSION: Session = { status: "loading" };
+const SIGN_IN_NOTICE = "Sign in to continue.";
 
-const Arrow = () => (
-  <svg aria-hidden="true" viewBox="0 0 18 18" className="arrow">
-    <path d="M3.5 9h10M9.5 4.5 14 9l-4.5 4.5" />
-  </svg>
-);
+interface AppLocation {
+  pathname: string;
+  search: string;
+}
 
-function App() {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
-  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<UserResponse | null>(null);
+function readLocation(): AppLocation {
+  return { pathname: window.location.pathname, search: window.location.search };
+}
 
-  useEffect(() => {
-    const handlePopState = () => setCurrentPath(window.location.pathname);
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+interface NavActionsProps {
+  session: Session;
+  pathname: string;
+  navigate: (path: string) => void;
+  onLogout: () => void;
+}
 
-  useEffect(() => {
-    getCurrentUser()
-      .then((user) => setCurrentUser(user))
-      .catch(() => setCurrentUser(null));
-  }, []);
-
-  function navigate(path: string, notice?: string) {
-    window.history.pushState({}, "", path);
-    setCurrentPath(path);
-    setNoticeMessage(notice || null);
+function NavActions({ session, pathname, navigate, onLogout }: NavActionsProps) {
+  if (session.status === "loading") {
+    return <div className="nav-links nav-links-pending" />;
   }
 
-  function handleLoginSuccess() {
-    getCurrentUser()
-      .then((user) => setCurrentUser(user))
-      .catch(() => setCurrentUser(null));
-    navigate("/");
+  if (session.status === "anonymous") {
+    return (
+      <div className="nav-links">
+        <button
+          type="button"
+          className="nav-button"
+          onClick={() => navigate("/login")}
+        >
+          Open workspace <Arrow />
+        </button>
+      </div>
+    );
   }
 
-  function handleLogout() {
-    clearStoredToken();
-    setCurrentUser(null);
-    navigate("/");
-  }
+  return (
+    <div className="nav-links">
+      {ROUTES.filter((route) => route.navLabel && canAccess(route.access, session)).map(
+        (route) => (
+          <button
+            key={route.path}
+            type="button"
+            className="nav-text-button"
+            onClick={() => navigate(route.path)}
+            aria-current={route.path === pathname ? "page" : undefined}
+          >
+            {route.navLabel}
+          </button>
+        ),
+      )}
+      <span style={{ fontSize: "13px", color: "#24754c", fontWeight: 600 }}>
+        {session.user.email}
+      </span>
+      <button
+        type="button"
+        className="nav-button"
+        onClick={onLogout}
+      >
+        Sign out
+      </button>
+    </div>
+  );
+}
 
-  const isLoginPage = currentPath === "/login";
-  const isRegisterPage = currentPath === "/register";
-  const isExamsPage = currentPath === "/exams";
-  const isResultsPage = currentPath === "/results";
-  const isExamBuilderPage = currentPath === EXAM_BUILDER_PATH;
-  const canManageExams =
-    currentUser?.role === "admin" || currentUser?.role === "superadmin";
+interface AppShellProps {
+  session: Session;
+  location: AppLocation;
+  noticeMessage: string | null;
+  navigate: (path: string, notice?: string) => void;
+  replace: (path: string, notice: string) => void;
+  onLoginSuccess: () => void;
+  onLogout: () => void;
+}
+
+function AppShell({
+  session,
+  location,
+  noticeMessage,
+  navigate,
+  replace,
+  onLoginSuccess,
+  onLogout,
+}: AppShellProps) {
+  const route = findRoute(location.pathname);
 
   return (
     <main className="page-shell">
@@ -75,122 +111,92 @@ function App() {
           <span>GDG <em>AI</em> Grader</span>
         </button>
 
-        <div className="nav-links">
-          {currentUser ? (
-            <>
-              <button
-                type="button"
-                className="nav-text-button"
-                onClick={() => navigate("/exams")}
-                aria-current={isExamsPage ? "page" : undefined}
-              >
-                Exams
-              </button>
-              <button
-                type="button"
-                className="nav-text-button"
-                onClick={() => navigate("/results")}
-                aria-current={isResultsPage ? "page" : undefined}
-              >
-                Results
-              </button>
-              {canManageExams && (
-                <button
-                  type="button"
-                  className="nav-text-button"
-                  onClick={() => navigate(EXAM_BUILDER_PATH)}
-                  aria-current={isExamBuilderPage ? "page" : undefined}
-                >
-                  New exam
-                </button>
-              )}
-              <span style={{ fontSize: "13px", color: "#24754c", fontWeight: 600 }}>
-                {currentUser.email}
-              </span>
-              <button
-                type="button"
-                className="nav-button"
-                onClick={handleLogout}
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                type="button"
-                className="nav-button"
-                onClick={() => navigate("/login")}
-              >
-                Open workspace <Arrow />
-              </button>
-            </>
-          )}
-        </div>
+        <NavActions
+          session={session}
+          pathname={location.pathname}
+          navigate={navigate}
+          onLogout={onLogout}
+        />
       </nav>
 
-      {/* Login Page */}
-      {isLoginPage && (
-        <LoginPage
-          onLoginSuccess={handleLoginSuccess}
-          onNavigateToRegister={() => navigate("/register")}
-          onCancel={() => navigate("/")}
-          noticeMessage={noticeMessage}
-        />
-      )}
-
-      {/* Register Page */}
-      {isRegisterPage && (
-        <RegisterPage
-          onRegisterSuccess={() =>
-            navigate(
-              "/login",
-              "Account created successfully! Please sign in with your credentials."
-            )
-          }
-          onNavigateToLogin={() => navigate("/login")}
-          onCancel={() => navigate("/")}
-        />
-      )}
-
-      {isExamsPage && <ExamsPage />}
-
-      {isResultsPage && <ResultsPage />}
-
-      {isExamBuilderPage && <AdminExamBuilderPage />}
-
-      {!isLoginPage &&
-        !isRegisterPage &&
-        !isExamsPage &&
-        !isResultsPage &&
-        !isExamBuilderPage && (
-        <>
-          <section className="hero hero-centered container" id="top">
-            <div className="hero-copy">
-              <p className="eyebrow"><span className="eyebrow-line" /> AI-ASSISTED GRADING</p>
-              <h1>Clear feedback.<br /><span>Less busywork.</span></h1>
-              <p className="hero-text">Review AI suggestions, adjust when needed, and share thoughtful feedback with every learner.</p>
-              <div className="hero-actions">
-                <button
-                  type="button"
-                  className="button button-primary"
-                  onClick={() => navigate(currentUser ? "/" : "/login")}
-                >
-                  {currentUser ? "Go to workspace" : "Start grading"} <Arrow />
-                </button>
-              </div>
-            </div>
-          </section>
-
-          <section className="proof-strip">
-            <div className="container proof-inner">
-              <p>HOW IT WORKS</p>
-              <div className="proof-items"><span><b>1.</b> Upload</span><i /><span><b>2.</b> Review</span><i /><span><b>3.</b> Share feedback</span></div>
-            </div>
-          </section>
-        </>
-      )}
+      <RouteGuard
+        access={route.access}
+        session={session}
+        returnPath={location.pathname + location.search}
+        onRequireLogin={(loginPath) => replace(loginPath, SIGN_IN_NOTICE)}
+        onBackToExams={() => navigate("/exams")}
+      >
+        {route.render({ session, noticeMessage, navigate, onLoginSuccess })}
+      </RouteGuard>
     </main>
+  );
+}
+
+type ResolvedAppShellProps = Omit<AppShellProps, "session"> & {
+  sessionPromise: Promise<Session>;
+};
+
+function ResolvedAppShell({ sessionPromise, ...shellProps }: ResolvedAppShellProps) {
+  return <AppShell session={use(sessionPromise)} {...shellProps} />;
+}
+
+function App() {
+  const [location, setLocation] = useState(readLocation);
+  const [noticeMessage, setNoticeMessage] = useState<string | null>(null);
+  const [sessionPromise, setSessionPromise] = useState(loadSession);
+
+  useEffect(() => {
+    const handlePopState = () => setLocation(readLocation());
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  function showCurrentLocation(notice?: string) {
+    setLocation(readLocation());
+    setNoticeMessage(notice || null);
+  }
+
+  function navigate(path: string, notice?: string) {
+    window.history.pushState({}, "", path);
+    showCurrentLocation(notice);
+  }
+
+  // Replacing the guarded URL keeps it out of history, so Back doesn't bounce
+  // straight into the same login redirect again.
+  function replace(path: string, notice: string) {
+    window.history.replaceState({}, "", path);
+    showCurrentLocation(notice);
+  }
+
+  function handleLoginSuccess() {
+    const next = safeNextPath(new URLSearchParams(location.search).get("next"));
+    startTransition(() => {
+      setSessionPromise(loadSession());
+      navigate(next ?? "/");
+    });
+  }
+
+  function handleLogout() {
+    clearStoredToken();
+    startTransition(() => {
+      setSessionPromise(Promise.resolve<Session>({ status: "anonymous" }));
+      navigate("/");
+    });
+  }
+
+  const shellProps = {
+    location,
+    noticeMessage,
+    navigate,
+    replace,
+    onLoginSuccess: handleLoginSuccess,
+    onLogout: handleLogout,
+  };
+
+  return (
+    <Suspense fallback={<AppShell session={LOADING_SESSION} {...shellProps} />}>
+      <ResolvedAppShell sessionPromise={sessionPromise} {...shellProps} />
+    </Suspense>
   );
 }
 
