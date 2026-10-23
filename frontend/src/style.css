@@ -1099,7 +1099,7 @@ h2 span {
   }
 }
 
-/* Exams list */
+/* Shared loading, empty, and error states */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -1112,6 +1112,122 @@ h2 span {
   border: 0;
 }
 
+.async-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 24px;
+  text-align: center;
+  border-radius: 13px;
+}
+
+.async-state-loading {
+  gap: 16px;
+}
+
+.async-state-loading .exam-grid {
+  width: 100%;
+  text-align: left;
+}
+
+.async-state-message {
+  margin: 0;
+  color: #5f6b64;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.state-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #dce9df;
+  border-top-color: #1c754b;
+  border-radius: 50%;
+  animation: state-spin 0.8s linear infinite;
+}
+
+@keyframes state-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.async-state-empty {
+  padding: 56px 24px;
+  background: #fbfcf9;
+  border: 1px dashed #cfdcd1;
+}
+
+.async-state-error {
+  padding: 40px 24px;
+  background: #fffaf7;
+  border: 1px solid #f0d9c9;
+}
+
+.async-state-icon {
+  width: 40px;
+  height: 40px;
+  padding: 8px;
+  color: #1c754b;
+  background: #e1f0e5;
+  border-radius: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.async-state-error .async-state-icon {
+  color: #9a542a;
+  background: #fbefe5;
+}
+
+.async-state-title {
+  margin: 18px 0 6px;
+  font-size: 22px;
+  letter-spacing: -0.04em;
+}
+
+.async-state-description {
+  max-width: 420px;
+  margin: 0;
+  color: #69736d;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.state-retry-button {
+  margin-top: 18px;
+  padding: 10px 16px;
+  color: #fff;
+  background: #1c754b;
+  border: 0;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.state-retry-button:hover {
+  background: #176440;
+}
+
+.state-retry-button:focus-visible {
+  outline: 3px solid #56a777;
+  outline-offset: 3px;
+}
+
+.async-state-error .async-state-title {
+  color: #713d21;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .state-spinner {
+    animation: none;
+  }
+}
+
+/* Exams list */
 .exams-page {
   padding: 40px 0 96px;
 }
@@ -1291,44 +1407,7 @@ h2 span {
   }
 }
 
-.exam-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 56px 24px;
-  text-align: center;
-  background: #fbfcf9;
-  border: 1px dashed #cfdcd1;
-  border-radius: 13px;
-}
 
-.exam-empty-icon {
-  width: 40px;
-  height: 40px;
-  padding: 8px;
-  color: #1c754b;
-  background: #e1f0e5;
-  border-radius: 11px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.exam-empty-title {
-  margin: 18px 0 6px;
-  font-size: 22px;
-  letter-spacing: -0.04em;
-}
-
-.exam-empty-text {
-  max-width: 360px;
-  margin: 0;
-  color: #69736d;
-  font-size: 14px;
-  line-height: 1.55;
-}
 
 .results-page {
   padding: 40px 0 96px;

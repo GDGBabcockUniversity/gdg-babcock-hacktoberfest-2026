@@ -60,6 +60,11 @@ function readMockScenario(): string | null {
 
 export function loadExams(): Promise<Exam[]> {
   const scenario = readMockScenario();
+  if (scenario === "error") {
+    return Promise.reject(
+      new Error("The exam list could not be loaded. Check your connection and try again."),
+    );
+  }
   const exams = scenario === "empty" ? [] : MOCK_EXAMS;
   const delayMs = scenario === "slow" ? SLOW_DELAY_MS : DEFAULT_DELAY_MS;
 

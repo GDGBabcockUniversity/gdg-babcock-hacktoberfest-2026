@@ -1,4 +1,5 @@
-import { Suspense, use, useState } from "react";
+import { useEffect, useState } from "react";
+import { EmptyState, ErrorState, LoadingState } from "../components/StateViews";
 import { ExamCard } from "../features/exams/ExamCard";
 import { ExamCardSkeleton } from "../features/exams/ExamCardSkeleton";
 import { loadExams } from "../features/exams/mockExams";
@@ -6,58 +7,56 @@ import type { Exam } from "../features/exams/types";
 
 const SKELETON_COUNT = 6;
 
+type ExamsState =
+  | { status: "loading" }
+  | { status: "success"; exams: Exam[] }
+  | { status: "error"; message: string };
+
 function ExamListSkeleton() {
   return (
-    <div className="exam-grid" aria-busy="true">
-      <p className="sr-only" role="status">
-        Loading exams
-      </p>
-      {Array.from({ length: SKELETON_COUNT }, (_, index) => (
-        <ExamCardSkeleton key={index} />
-      ))}
-    </div>
-  );
-}
-
-function ExamsEmptyState() {
-  return (
-    <div className="exam-empty">
-      <svg aria-hidden="true" viewBox="0 0 24 24" className="exam-empty-icon">
-        <path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10A.5.5 0 0 1 7 20V3.5Z" />
-        <path d="M14 3.5V8h4M10 12.5h5M10 16h3" />
-      </svg>
-      <h2 className="exam-empty-title">No exams yet</h2>
-      <p className="exam-empty-text">
-        Exams appear here once an administrator creates them.
-      </p>
-    </div>
-  );
-}
-
-interface ExamListProps {
-  examsPromise: Promise<Exam[]>;
-}
-
-function ExamList({ examsPromise }: ExamListProps) {
-  const exams = use(examsPromise);
-
-  if (exams.length === 0) {
-    return <ExamsEmptyState />;
-  }
-
-  return (
-    <ul className="exam-grid" aria-label="Exams">
-      {exams.map((exam) => (
-        <li key={exam.id}>
-          <ExamCard exam={exam} />
-        </li>
-      ))}
-    </ul>
+    <LoadingState message="Loading exams">
+      <ul className="exam-grid" aria-hidden="true">
+        {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+          <li key={index}>
+            <ExamCardSkeleton />
+          </li>
+        ))}
+      </ul>
+    </LoadingState>
   );
 }
 
 export function ExamsPage() {
-  const [examsPromise] = useState(loadExams);
+  const [retryCount, setRetryCount] = useState(0);
+  const [state, setState] = useState<ExamsState>({ status: "loading" });
+
+  useEffect(() => {
+    let active = true;
+
+    loadExams()
+      .then((exams) => {
+        if (active) setState({ status: "success", exams });
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        setState({
+          status: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred. Please try again.",
+        });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [retryCount]);
+
+  function retryLoadingExams() {
+    setState({ status: "loading" });
+    setRetryCount((count) => count + 1);
+  }
 
   return (
     <section className="exams-page container" aria-labelledby="exams-heading">
@@ -73,9 +72,25 @@ export function ExamsPage() {
         </p>
       </header>
 
-      <Suspense fallback={<ExamListSkeleton />}>
-        <ExamList examsPromise={examsPromise} />
-      </Suspense>
+      {state.status === "loading" && <ExamListSkeleton />}
+      {state.status === "error" && (
+        <ErrorState message={state.message} onRetry={retryLoadingExams} />
+      )}
+      {state.status === "success" && state.exams.length === 0 && (
+        <EmptyState
+          title="No exams yet"
+          description="Exams appear here once an administrator creates them."
+        />
+      )}
+      {state.status === "success" && state.exams.length > 0 && (
+        <ul className="exam-grid" aria-label="Exams">
+          {state.exams.map((exam) => (
+            <li key={exam.id}>
+              <ExamCard exam={exam} />
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
