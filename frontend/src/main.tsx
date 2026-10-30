@@ -12,6 +12,7 @@ import {
 import { createRoot } from "react-dom/client";
 import "./style.css";
 import { Arrow } from "./components/Arrow";
+import { initializeTheme, ThemeToggle } from "./components/ThemeToggle";
 import { buildLoginPath, canAccess, safeNextPath } from "./features/auth/access";
 import { RouteGuard } from "./features/auth/RouteGuard";
 import { ROUTES, findRoute } from "./features/auth/routes";
@@ -198,6 +199,7 @@ function AppShell({
             navigate={navigate}
             onLogout={onLogout}
           />
+          <ThemeToggle />
         </div>
       </header>
 
@@ -304,5 +306,7 @@ const rootElement = document.getElementById("root");
 if (!rootElement) {
   throw new Error("Root element not found");
 }
+
+initializeTheme();
 
 createRoot(rootElement).render(<App />);

@@ -167,6 +167,38 @@ button {
   background: #176440;
   transform: translateY(-2px);
 }
+.theme-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 12px;
+  color: #3f4c44;
+  background: #fff;
+  border: 1px solid #dfe8e0;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+.theme-toggle:hover {
+  border-color: #8cbea0;
+}
+.theme-toggle:focus-visible {
+  outline: 3px solid #8cbea0;
+  outline-offset: 3px;
+}
 .arrow {
   width: 17px;
   height: 17px;
@@ -1708,6 +1740,186 @@ h2 span {
 .result-no-evidence {
   color: #69736d;
   font-style: italic;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --dark-canvas: #111812;
+  --dark-surface: #1a241d;
+  --dark-raised: #202d24;
+  --dark-ink: #e7efe8;
+  --dark-muted: #afbbb1;
+  --dark-line: #34463a;
+  --dark-accent: #83d6a0;
+  --dark-accent-bg: #233d2c;
+}
+
+:root[data-theme="dark"] body {
+  color: var(--dark-ink);
+  background: var(--dark-canvas);
+}
+
+:root[data-theme="dark"] .page-shell {
+  color: var(--dark-ink);
+  background:
+    radial-gradient(circle at 84% 17%, #233d2c 0, transparent 24%),
+    var(--dark-canvas);
+}
+
+:root[data-theme="dark"] :is(
+  .auth-card,
+  .review-card,
+  .builder-panel,
+  .builder-fieldset,
+  .exam-card,
+  .result-card,
+  .result-answer,
+  .rubric-row,
+  .exam-created,
+  .exam-summary,
+  .theme-toggle,
+  .nav-menu-toggle,
+  .single-choice-option
+) {
+  color: var(--dark-ink);
+  background-color: var(--dark-surface);
+  border-color: var(--dark-line);
+}
+
+:root[data-theme="dark"] :is(
+  .nav-links,
+  .brand,
+  .hero-text,
+  .exams-subtitle,
+  .result-submitted,
+  .result-answer-section h4,
+  .result-response,
+  .result-feedback,
+  .result-no-evidence,
+  .auth-subtitle,
+  .auth-back-button,
+  .auth-footer-note p,
+  .exam-card-description,
+  .exam-card-meta dt,
+  .field-hint,
+  .builder-fieldset legend,
+  .async-state-description,
+  .async-state-message,
+  .feedback,
+  .review-heading,
+  .student-row,
+  .principle-copy,
+  .proof-strip
+) {
+  color: var(--dark-muted);
+}
+
+:root[data-theme="dark"] :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  .exam-card-title,
+  .result-exam-title,
+  .result-question-header h3,
+  .single-choice-prompt,
+  .builder-panel h2,
+  .exam-summary h2,
+  .auth-header h2,
+  .form-group label,
+  .option-row label,
+  .brand
+) {
+  color: var(--dark-ink);
+}
+
+:root[data-theme="dark"] :is(
+  .nav-links a:not(.nav-button):hover,
+  .nav-text-button:hover,
+  .nav-text-button[aria-current="page"],
+  .text-link:hover,
+  .brand em,
+  h1 span,
+  h2 span,
+  .inline-link,
+  .exam-card-meta dd
+) {
+  color: var(--dark-accent);
+}
+
+:root[data-theme="dark"] :is(
+  .theme-toggle,
+  .nav-menu-toggle,
+  .form-group input,
+  .exam-builder .form-group textarea,
+  .exam-builder .form-group select,
+  .builder-panel .form-group input,
+  .builder-panel .form-group textarea,
+  .builder-panel .form-group select
+) {
+  color: var(--dark-ink);
+  background-color: #151e18;
+  border-color: var(--dark-line);
+}
+
+:root[data-theme="dark"] :is(
+  .nav-button,
+  .button-primary,
+  .builder-primary-button,
+  .state-retry-button
+) {
+  color: #102016;
+  background-color: var(--dark-accent);
+}
+
+:root[data-theme="dark"] :is(
+  .question-card,
+  .rubric-row,
+  .result-answer,
+  .single-choice-option
+) {
+  background-color: var(--dark-raised);
+  border-color: var(--dark-line);
+}
+
+:root[data-theme="dark"] .single-choice-option.is-selected {
+  color: var(--dark-accent);
+  background-color: var(--dark-accent-bg);
+  border-color: var(--dark-accent);
+}
+
+:root[data-theme="dark"] .result-evidence li {
+  color: #c6ebd0;
+  background-color: #233d2c;
+}
+
+:root[data-theme="dark"] .async-state-empty {
+  background-color: var(--dark-surface);
+  border-color: var(--dark-line);
+}
+
+:root[data-theme="dark"] .async-state-error {
+  color: #ffd3bd;
+  background-color: #30221d;
+  border-color: #694637;
+}
+
+:root[data-theme="dark"] .async-state-error .async-state-title {
+  color: #ffd3bd;
+}
+
+:root[data-theme="dark"] .alert-error,
+:root[data-theme="dark"] .form-group input.input-error,
+:root[data-theme="dark"] .exam-builder .form-group textarea.input-error {
+  color: #ffb9aa;
+  background-color: #321f1d;
+  border-color: #75423a;
+}
+
+:root[data-theme="dark"] .alert-success {
+  color: #a4e7b9;
+  background-color: #1b3023;
+  border-color: #345b40;
 }
 
 .single-choice-question {
